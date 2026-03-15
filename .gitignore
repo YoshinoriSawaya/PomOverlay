@@ -1,0 +1,11 @@
+# Visual Studio 共通の除外設定
+.vs/
+[Bb]in/
+[Ob]j/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# その他、自動生成されるファイル
+.DS_Store

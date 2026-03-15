@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "DxBGattEJIw=",
+  "success": true,
+  "projectFilePath": "E:\\Engineering\\C#\\PomOverlay\\PomOverlay\\PomOverlay.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\PC_User\\.nuget\\packages\\microsoft.net.illink.tasks\\10.0.3\\microsoft.net.illink.tasks.10.0.3.nupkg.sha512",
+    "C:\\Users\\PC_User\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\10.0.3\\microsoft.netcore.app.runtime.win-x64.10.0.3.nupkg.sha512",
+    "C:\\Users\\PC_User\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\10.0.3\\microsoft.windowsdesktop.app.runtime.win-x64.10.0.3.nupkg.sha512",
+    "C:\\Users\\PC_User\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\10.0.3\\microsoft.aspnetcore.app.runtime.win-x64.10.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
