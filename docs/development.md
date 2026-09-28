@@ -34,3 +34,9 @@
 - `PomOverlay.Tests`(xUnit)に、WPF非依存のロジック層(`PomodoroStateCalculator`・`AuroraPhysicsCalculator`)のユニットテストがある
 - リポジトリ直下で `dotnet test PomOverlay.slnx` を実行する(Visual Studio ではテストエクスプローラーからも実行できる)
 - 本体が WPF の `Color` 型を使うため、テストプロジェクトも `net10.0-windows` / `UseWPF` にしている
+
+## 負荷の計測
+
+- `tools/measure.ps1` で PomOverlay と DWM の CPU・GPU・メモリを計測できる(PomOverlay を起動して30秒計測し、終了する)
+- 事前に `dotnet build PomOverlay/PomOverlay.csproj -c Release` してから、リポジトリ直下で `pwsh tools/measure.ps1` を実行する
+- PomOverlay が起動中だと実行できない。計測結果は `issues/tasks/E02-01-baseline-measurement.md` に基準値がある
