@@ -22,6 +22,15 @@ namespace PomOverlay.Managers
         public void SetLanguage(bool jp) => _isJapanese = jp;
 
         /// <summary>
+        /// 毎フレーム呼び、FPS 計算用にフレーム間隔を記録します（テキストの組み立ては間引かれるため分けている）
+        /// </summary>
+        public void RecordFrame(double delta)
+        {
+            _deltaHistory.Enqueue(delta);
+            if (_deltaHistory.Count > MaxHistory) _deltaHistory.Dequeue();
+        }
+
+        /// <summary>
         /// デバッグウィンドウに表示する全テキストを構築します
         /// </summary>
         public string GenerateDebugText(
@@ -30,8 +39,7 @@ namespace PomOverlay.Managers
             AuroraPhysics p,
             AppConfig config,
             int screenIndex,
-            DebugLabels labels,
-            double delta)
+            DebugLabels labels)
         {
             const int TotalWidth = 44;
             string line = new string('-', TotalWidth);
@@ -40,9 +48,6 @@ namespace PomOverlay.Managers
             // 1. ヘッダー情報
             sb.AppendLine($"[ {labels.Header}: {screenIndex} ] {now:HH:mm:ss}");
             // FPS: 直近の delta の平均から計算する
-            _deltaHistory.Enqueue(delta);
-            if (_deltaHistory.Count > MaxHistory) _deltaHistory.Dequeue();
-
             double avgDelta = _deltaHistory.Count > 0 ? _deltaHistory.Average() : 0;
 
             double fps = avgDelta > 0 ? 1.0 / avgDelta : 0;

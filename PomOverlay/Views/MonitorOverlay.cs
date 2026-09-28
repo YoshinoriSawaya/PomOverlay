@@ -1,4 +1,4 @@
-using PomOverlay.Managers;
+﻿using PomOverlay.Managers;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -30,6 +30,10 @@ namespace PomOverlay
         private readonly ConsecutiveFailureLimiter _updateFailures = new(10);
 
         private readonly DebugLabels _labels = new();
+
+        // デバッグ表示のテキストは毎フレーム組み直すと重い（1コアの約17%）ので間引く
+        private static readonly TimeSpan DebugTextInterval = TimeSpan.FromMilliseconds(250);
+        private DateTime _lastDebugText = DateTime.MinValue;
 
         public MonitorOverlay(Rect bounds, int index, AppConfig config)
         {
@@ -112,8 +116,13 @@ namespace PomOverlay
                 // 4. デバッグ表示
                 if (IsDebugVisible)
                 {
-                    _debugWindow.SetText(_debugManager.GenerateDebugText(
-                        now, state, physics, _config, ScreenIndex, _labels, delta));
+                    _debugManager.RecordFrame(delta);
+                    if (now - _lastDebugText >= DebugTextInterval)
+                    {
+                        _lastDebugText = now;
+                        _debugWindow.SetText(_debugManager.GenerateDebugText(
+                            now, state, physics, _config, ScreenIndex, _labels));
+                    }
                 }
 
                 _updateFailures.RecordSuccess();

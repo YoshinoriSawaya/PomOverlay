@@ -22,7 +22,7 @@
 ## デバッグ表示
 
 - トレイメニュー「デバッグ表示設定」から、モニターごとにデバッグ情報(現在モード・残り時間・FPS・物理演算の値など)のON/OFFを切り替えられる
-- デバッグ情報の文字列は `Managers/DebugManager.cs` で組み立て、`Views/DebugWindow` に表示する
+- デバッグ情報の文字列は `Managers/DebugManager.cs` で組み立て、`Views/DebugWindow` に表示する。負荷を抑えるため、テキストの更新は250msごと
 
 ## ログ
 
