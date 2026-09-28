@@ -128,6 +128,18 @@ namespace PomOverlay
                     );
                 _config = AppConfig.CreateDefault();
             }
+
+            // 手編集による壊れた値はメモリ上だけで補正する（config.json は書き換えない）
+            var warnings = ConfigValidator.Sanitize(_config);
+            if (warnings.Count > 0)
+            {
+                System.Windows.MessageBox.Show(
+                    "config.json に不正な値があったため、以下を補正して使います。\n\n" + string.Join("\n", warnings),
+                    "PomOverlay",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning
+                    );
+            }
         }
 
         private void SaveConfig()

@@ -10,7 +10,7 @@
 - [x] [E01-01: 状態計算・物理演算のロジック層分離](../tasks/E01-01-extract-logic-layer.md)
 - [x] [E01-02: テストプロジェクトの追加](../tasks/E01-02-add-test-project.md)
 - [x] [E01-03: Updateループのエラーハンドリング見直し](../tasks/E01-03-fix-error-handling.md)
-- [ ] [E01-04: config.json値のバリデーション追加](../tasks/E01-04-add-config-validation.md)
+- [x] [E01-04: config.json値のバリデーション追加](../tasks/E01-04-add-config-validation.md)
 - [ ] [E01-05: コメントアウトされた旧実装の削除](../tasks/E01-05-remove-dead-code.md)
 
 ## 完了条件
