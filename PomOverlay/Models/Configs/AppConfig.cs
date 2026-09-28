@@ -14,7 +14,6 @@ namespace PomOverlay
      */
     public class AppConfig
     {
-        // AppConfig.cs または管理クラスに追記
         public enum Mode { Auto, Focus, Rest, Sleep }
         public Mode OverrideMode { get; set; } = Mode.Auto;
 
@@ -23,12 +22,6 @@ namespace PomOverlay
 
         // フェードにかける時間
         public double TransitionSec { get; set; } = 30.0;
-
-        // モード設定（Dictionary形式で動的に増やせる）
-        //public Dictionary<Mode, PhaseConfig> Modes { get; set; } = new();
-
-        // 強制割り込みスケジュール
-        //public List<ScheduleItem> Schedules { get; set; } = new();
 
         public PhaseConfig GetModeConfig(Mode modeName)
         {
@@ -41,7 +34,7 @@ namespace PomOverlay
         }
 
 
-        // 判定メソッドの修正
+        // 強制設定 → スケジュール → Auto の順で現在のモードを決める
         public Mode GetCurrentMode(DateTime now)
         {
             // 1. 強制設定があればそれを最優先で返す
@@ -109,7 +102,7 @@ namespace PomOverlay
                 ColorStrings = ["DarkRed", "Red", "DarkRed", "OrangeRed", "DarkOrange"]
             };
 
-            // Sleepモード (追加！)
+            // Sleepモード
             config.Modes["Sleep"] = new PhaseConfig
             {
                 Min = 0, // タイマー用ではないので0

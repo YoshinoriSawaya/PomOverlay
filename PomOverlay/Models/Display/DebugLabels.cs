@@ -1,8 +1,4 @@
-﻿using System.Windows.Media;
-using Color = System.Windows.Media.Color;
-using ColorConverter = System.Windows.Media.ColorConverter;
-
-namespace PomOverlay
+﻿namespace PomOverlay
 {
     public class DebugLabels
     {

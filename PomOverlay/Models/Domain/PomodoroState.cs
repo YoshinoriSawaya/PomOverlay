@@ -4,10 +4,10 @@ namespace PomOverlay
 {
     public class PomodoroState
     {
-        // 1. 文字列ベースのモード名を持つようにする
+        // モード名（config.json の Modes のキー）
         public string ModeName { get; set; } = "Focus";
 
-        // 既存のプロパティ（互換性のために IsWork も残す）
+        // IsWork は Focus 中かどうか
         public bool IsWork { get; set; }
         public double RemainingSec { get; set; }
         public double ProgressRatio { get; set; }
@@ -15,7 +15,7 @@ namespace PomOverlay
         public PhaseConfig CurrentSet { get; set; } = null!;
         public PhaseConfig TargetSet { get; set; } = null!;
 
-        // 2. 表示名を Dictionary のキーに基づいて柔軟に返す
+        // モード名から表示名を返す
         public string GetDisplayName(bool isJapanese)
         {
             return ModeName switch
@@ -28,7 +28,7 @@ namespace PomOverlay
             };
         }
 
-        // 3. フェード状態の文字列表示（ロジックは維持し、ラベルを少し整理）
+        // フェード状態の文字列表示
         public string GetTransitionText(bool isJapanese, double transitionSec)
         {
             string label = isJapanese ? "切替　　" : "TRANS   ";

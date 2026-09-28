@@ -3,7 +3,7 @@ using static PomOverlay.AppConfig;
 
 namespace PomOverlay
 {
-    // --- JSON用のスケジュールクラスも修正 ---
+    // config.json の Schedules の1要素
     public class ScheduleItem
     {
         public string Start { get; set; } = "00:00";

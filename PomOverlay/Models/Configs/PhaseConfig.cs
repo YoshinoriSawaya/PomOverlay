@@ -6,8 +6,6 @@ namespace PomOverlay
 {
     public class PhaseConfig
     {
-        //public string _Help { get; set; } = "Min:分, ColorStrings:色の配列, Thick:枠太さ, BlurMin-Max:ぼかし範囲, PulseSec:明滅周期(秒), FlowDuration:流速(秒)";
-
         public int Min { get; set; }
         public string[] ColorStrings { get; set; } = Array.Empty<string>();
         public double Thick { get; set; }
@@ -21,7 +19,6 @@ namespace PomOverlay
 
         public Color GetInterpolatedColor(int index, int totalStops)
         {
-            // ここで null チェックを入れるとより安全です
             if (ColorStrings == null || ColorStrings.Length == 0) return Colors.Black;
             if (ColorStrings.Length == 1) return (Color)ColorConverter.ConvertFromString(ColorStrings[0]);
 

@@ -59,7 +59,6 @@ git clone https://github.com/YoshinoriSawaya/PomOverlay.git
 
 現在進行中・検討中の内容は [`issues/README.md`](issues/README.md) を参照してください。おおまかには以下を予定しています。
 
-- コード整理(状態計算・物理演算のロジック層分離、テスト基盤の追加)
 - パフォーマンス改善(全画面レイヤードウィンドウをフチの帯だけに絞る、ぼかし処理の事前ベイク化)
 - 設定ウィンドウ(GUIでの設定編集)
 

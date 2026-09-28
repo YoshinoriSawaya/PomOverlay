@@ -8,19 +8,21 @@ PomOverlayの横断的な設計判断をまとめる。個別のタスクの経�
 PomOverlay/
 ├── Views/            App.xaml(.cs)、MainWindow.xaml(.cs)
 ├── Models/
-│   ├── Configs/       AppConfig, PhaseConfig, ScheduleItem
-│   ├── Domain/         PomodoroState, AuroraPhysics
+│   ├── Configs/       AppConfig, PhaseConfig, ScheduleItem, ConfigValidator
+│   ├── Domain/         PomodoroState, AuroraPhysics,
+│   │                   PomodoroStateCalculator, AuroraPhysicsCalculator, Interpolation
 │   └── Display/         DebugLabels
-└── Managers/           DebugManager
+└── Managers/           DebugManager, ConsecutiveFailureLimiter
+PomOverlay.Tests/       ロジック層のユニットテスト(xUnit)
 ```
 
-- `App.xaml.cs`：起動時に `config.json` を読み込み、接続されている全モニター分の `MainWindow` を生成する。トレイアイコン・メニューの管理もここ
-- `MainWindow.xaml.cs`：現状は「状態計算(`CalculatePomodoroState`)」「物理演算(`CalculatePhysics`)」「描画反映(`ApplyVisuals`)」「デバッグ表示」を1クラスで担っている
+- `App.xaml.cs`：起動時・リロード時に `config.json` を読み込み、`ConfigValidator` で不正な値を補正する。接続されている全モニター分の `MainWindow` を生成する。トレイアイコン・メニューの管理もここ
+- `MainWindow.xaml.cs`：16msごとのタイマーで `PomodoroStateCalculator`(状態計算)→ `AuroraPhysicsCalculator`(物理演算)を呼び、結果をXAML要素に反映する「配線」だけを持つ。連続して例外が出たらループを止める(`ConsecutiveFailureLimiter`)
+- 状態計算・物理演算・設定のバリデーションはWPFの画面に依存しないクラスに置き、`PomOverlay.Tests` でテストしている。色だけはWPFの `System.Windows.Media.Color` をそのまま使っている
 - 透過表示は `AllowsTransparency="True"` + P/Invokeでの `WS_EX_LAYERED` 指定によるレイヤードウィンドウ
 
 ## 既知のアーキテクチャ上の課題
 
-- **`MainWindow` にロジックが集中している。** WPFの `Window` は依存が重く単体テストしにくいため、状態計算・物理演算はWPF非依存のクラスへ分離する方針(詳細は `issues/epics/E01-code-cleanup.md`)
 - **レイヤードウィンドウが全画面サイズ。** `AllowsTransparency` はWPFのレンダリングをソフトウェア(CPU)パスに切り替える。縁しか光らせていなくても画面全体分のサーフェスを毎フレーム転送しており、これが動作の重さの主因
 - **毎フレームのBlurEffect適用が重い。** `BlurEffect`(ソフトウェア実装)を60FPSで画面全体にかけている
 

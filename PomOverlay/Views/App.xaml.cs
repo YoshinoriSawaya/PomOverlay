@@ -19,16 +19,10 @@ namespace PomOverlay
         private bool _isJapanese = true;
         private bool _showDebug = true;
 
-        //private System.Drawing.Icon? _iconNormal;
-        //private System.Drawing.Icon? _iconSleep;
-
-
-        // NotifyIconを管理しているクラス（App.xaml.cs等）に追加
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         static extern uint RegisterWindowMessage(string lpString);
 
         private uint _uTaskbarRestartMsg;
-        // App.xaml.cs 内
         private readonly DebugManager _logger = new(); // ログ用
 
         protected override void OnStartup(StartupEventArgs e)
@@ -36,10 +30,6 @@ namespace PomOverlay
             // 1. 設定の読み込み
             LoadOrCreateConfig();
 
-            //this.DispatcherUnhandledException += (s, e) => {
-            //    System.Windows.MessageBox.Show($"致命的なエラー: {e.Exception.Message}");
-            //    e.Handled = true; // アプリを落とさずに継続を試みる
-            //};
             // 未処理の例外をキャッチするイベント
             this.DispatcherUnhandledException += (s, ex) =>
             {
@@ -64,9 +54,6 @@ namespace PomOverlay
                 var win = new MainWindow(rect, i, _config);
                 win.SetLanguage(_isJapanese);
                 win.SetDebugVisibility(i == 1 && _showDebug); // 最初は1番目のみデバッグ表示
-
-                //win.SetDebugVisibility(i == 0 && _showDebug); // 最初は0番目のみデバッグ表示
-
                 win.Show();
                 _windows.Add(win);
             }
@@ -75,28 +62,20 @@ namespace PomOverlay
             SetupTrayIcon();
         }
 
-
-        // メッセージループで再起動を検知（HwndSourceなどを使用している場合）
-        // もし MainWindow があるなら、その HwndSourceHook で処理します
-
-
         private void UpdateTrayIcon(AppConfig.Mode mode)
         {
             if (_notifyIcon == null) return;
 
-            // モードに応じてアイコンやテキストを切り替える
+            // モードに応じてツールチップのテキストを切り替える
             switch (mode)
             {
                 case AppConfig.Mode.Sleep:
-                    //_notifyIcon.Icon = _iconNormal;
                     _notifyIcon.Text = "PomOverlay - 睡眠中 🌙";
                     break;
                 case AppConfig.Mode.Focus:
-                    //_notifyIcon.Icon = _iconNormal;
                     _notifyIcon.Text = "PomOverlay - 集中モード 🎯";
                     break;
                 default:
-                    //_notifyIcon.Icon = _iconNormal;
                     _notifyIcon.Text = "PomOverlay - 自動運転中";
                     break;
             }
@@ -147,9 +126,10 @@ namespace PomOverlay
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true,
-                // ここがポイント：日本語をエスケープせずにそのまま出力する
+                // 日本語をエスケープせずにそのまま出力する
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            }; string json = JsonSerializer.Serialize(_config, options);
+            };
+            string json = JsonSerializer.Serialize(_config, options);
             File.WriteAllText("config.json", json);
         }
 
@@ -174,10 +154,9 @@ namespace PomOverlay
             _notifyIcon.Text = "PomOverlay";
             var menu = new ContextMenuStrip();
 
-            // --- 【新設】モード切替セクション ---
+            // --- モード切替 ---
             var modeMenu = new ToolStripMenuItem("現在のモードを固定");
 
-            // 各モードのアイテム作成（ヘルパーメソッドを使うとスッキリします）
             modeMenu.DropDownItems.Add(CreateOverrideItem("自動 (通常サイクル)", AppConfig.Mode.Auto));
 
             modeMenu.DropDownItems.Add(new ToolStripSeparator());
@@ -185,7 +164,7 @@ namespace PomOverlay
             modeMenu.DropDownItems.Add(CreateOverrideItem("強制 Rest ☕", AppConfig.Mode.Rest));
             modeMenu.DropDownItems.Add(CreateOverrideItem("強制 Sleep 🌙", AppConfig.Mode.Sleep));
 
-            // modeMenu.DropDownOpening の中を以下のように修正
+            // 開くたびに現在の固定モードへチェックを付け直す
             modeMenu.DropDownOpening += (s, e) =>
             {
                 foreach (ToolStripItem item in modeMenu.DropDownItems)
@@ -200,8 +179,6 @@ namespace PomOverlay
 
             menu.Items.Add(modeMenu);
             menu.Items.Add(new ToolStripSeparator());
-
-
 
             // --- 設定操作系 ---
             menu.Items.Add("設定ファイル (JSON) を開く", null, (s, e) =>
@@ -267,7 +244,6 @@ namespace PomOverlay
         {
             LoadOrCreateConfig();
             ApplyConfigToWindows();
-            // メッセージ, タイトル, ボタン, アイコン
             System.Windows.MessageBox.Show(
                 "設定を再読み込みしました。",
                 "PomOverlay",
@@ -276,14 +252,13 @@ namespace PomOverlay
             );
         }
 
-        // アイテム作成を共通化するヘルパー
-        // App.xaml.cs 内
+        // モード固定メニューのアイテムを作る
         private ToolStripMenuItem CreateOverrideItem(string text, AppConfig.Mode mode)
         {
             var item = new ToolStripMenuItem(text) { Tag = mode };
             item.Click += (s, e) =>
             {
-                _config.OverrideMode = mode; // enum を代入
+                _config.OverrideMode = mode;
                 ApplyConfigToWindows();
             };
             return item;

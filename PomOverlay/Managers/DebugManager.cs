@@ -2,7 +2,7 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-using System.IO; // 追加
+using System.IO;
 
 namespace PomOverlay.Managers
 {
@@ -39,17 +39,15 @@ namespace PomOverlay.Managers
 
             // 1. ヘッダー情報
             sb.AppendLine($"[ {labels.Header}: {screenIndex} ] {now:HH:mm:ss}");
-            // 1. 履歴を更新
+            // FPS: 直近の delta の平均から計算する
             _deltaHistory.Enqueue(delta);
             if (_deltaHistory.Count > MaxHistory) _deltaHistory.Dequeue();
 
-            // 2. 平均 delta を計算（0除算防止）
             double avgDelta = _deltaHistory.Count > 0 ? _deltaHistory.Average() : 0;
 
-            // 3. 平均 FPS を計算
             double fps = avgDelta > 0 ? 1.0 / avgDelta : 0;
 
-            // 4. 表示（0.5秒ごとの更新と組み合わせると最強に読みやすいです）
+            // 数字がちらつかないよう、表示は1秒ごとに更新する
             if ((now - _lastFpsUpdateTime).TotalMilliseconds > 1000)
             {
                 _lastFpsDisplayValue = fps;
@@ -57,19 +55,7 @@ namespace PomOverlay.Managers
             }
 
             sb.AppendLine($"Performance: {_lastFpsDisplayValue,5:0.0} FPS (avg)");
-            //// FPS表示の更新頻度を抑える（0.5秒ごと）
-            //if ((now - _lastFpsUpdateTime).TotalMilliseconds > 1000)
-            //{
-            //    _lastFpsDisplayValue = delta > 0 ? 1.0 / delta : 0;
-            //    _lastFpsUpdateTime = now;
-            //}
-            //// 小数点第1位までに固定し、桁数を揃えて表示
-            //sb.AppendLine($"Performance: {(delta > 0 ? 1.0 / delta : 0),5:0.0} FPS");
             sb.AppendLine(line);
-            //// 簡易FPS計算のヒント
-            //double fps = 1.0 / delta;
-            //sb.AppendLine($"Performance: {fps,5:0.0} FPS");
-            //sb.AppendLine(line);
 
             // 2. モード情報
             var scheduledMode = config.GetCurrentMode(now);
