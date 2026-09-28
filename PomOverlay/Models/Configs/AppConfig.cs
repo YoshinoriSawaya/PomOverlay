@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PomOverlay
 {
@@ -70,6 +72,19 @@ namespace PomOverlay
             }
             return sb.ToString().TrimEnd();
         }
+
+        // config.json の読み書き設定。enum は "Focus" のような名前で書き出し、読み込みは名前・数値のどちらも受け付ける
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            WriteIndented = true,
+            // 日本語をエスケープせずにそのまま出力する
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
+        public static AppConfig? FromJson(string json) => JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
+
+        public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
         public static AppConfig CreateDefault()
         {

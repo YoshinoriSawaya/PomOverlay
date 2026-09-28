@@ -12,6 +12,7 @@
 - [x] [E01-03: Updateループのエラーハンドリング見直し](../tasks/E01-03-fix-error-handling.md)
 - [x] [E01-04: config.json値のバリデーション追加](../tasks/E01-04-add-config-validation.md)
 - [x] [E01-05: コメントアウトされた旧実装の削除](../tasks/E01-05-remove-dead-code.md)
+- [x] [E01-06: config.json の enum を名前で書けるようにする](../tasks/E01-06-accept-enum-names-in-config.md)(E01-04 で見つけた問題の追加対応)
 
 ## 完了条件
 

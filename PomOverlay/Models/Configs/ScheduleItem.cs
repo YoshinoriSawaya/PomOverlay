@@ -9,7 +9,7 @@ namespace PomOverlay
         public string Start { get; set; } = "00:00";
         public string End { get; set; } = "00:00";
 
-        // 文字列で保存されますが、enumとして扱えるようになります
+        // config.json では "Sleep" のような名前で書く(古い数値形式も読める)
         public Mode ApplyMode { get; set; } = Mode.Rest;
     }
 }

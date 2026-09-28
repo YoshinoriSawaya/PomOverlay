@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Forms;
 using static PomOverlay.AppConfig;
@@ -89,7 +88,7 @@ namespace PomOverlay
                 if (File.Exists(path))
                 {
                     string json = File.ReadAllText(path);
-                    _config = JsonSerializer.Deserialize<AppConfig>(json) ?? AppConfig.CreateDefault();
+                    _config = AppConfig.FromJson(json) ?? AppConfig.CreateDefault();
                 }
                 else
                 {
@@ -123,14 +122,7 @@ namespace PomOverlay
 
         private void SaveConfig()
         {
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                // 日本語をエスケープせずにそのまま出力する
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
-            string json = JsonSerializer.Serialize(_config, options);
-            File.WriteAllText("config.json", json);
+            File.WriteAllText("config.json", _config.ToJson());
         }
 
         private void SetupTrayIcon()
