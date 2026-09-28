@@ -22,7 +22,7 @@
 ## デバッグ表示
 
 - トレイメニュー「デバッグ表示設定」から、モニターごとにデバッグ情報(現在モード・残り時間・FPS・物理演算の値など)のON/OFFを切り替えられる
-- デバッグ情報の描画ロジックは `Managers/DebugManager.cs` に集約されている
+- デバッグ情報の文字列は `Managers/DebugManager.cs` で組み立て、`Views/DebugWindow` に表示する
 
 ## ログ
 
@@ -38,5 +38,7 @@
 ## 負荷の計測
 
 - `tools/measure.ps1` で PomOverlay と DWM の CPU・GPU・メモリを計測できる(PomOverlay を起動して30秒計測し、終了する)
-- 事前に `dotnet build PomOverlay/PomOverlay.csproj -c Release` してから、リポジトリ直下で `pwsh tools/measure.ps1` を実行する
+- 事前に `dotnet build PomOverlay/PomOverlay.csproj -c Release` してから、リポジトリ直下で `pwsh tools/measure.ps1 -Mode Sleep` のように実行する
+- スケジュールで時刻によってモードが変わるので、別の日の計測と比べるときは `-Mode`(Focus/Rest/Sleep)でモードを固定する。実行ファイルのフォルダを一時フォルダにコピーして `OverrideMode` を書き換えるので、元の `config.json` は変わらない
+- `-ExePath` で別のビルド(旧版など)を指定して比べられる
 - PomOverlay が起動中だと実行できない。計測結果は `issues/tasks/E02-01-baseline-measurement.md` に基準値がある

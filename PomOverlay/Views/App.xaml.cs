@@ -13,7 +13,7 @@ namespace PomOverlay
     public partial class App : System.Windows.Application
     {
         private AppConfig _config = new();
-        private List<MainWindow> _windows = new();
+        private List<MonitorOverlay> _windows = new();
         private NotifyIcon _notifyIcon = null!;
         private bool _isJapanese = true;
         private bool _showDebug = true;
@@ -50,7 +50,7 @@ namespace PomOverlay
                 var screen = screens[i];
                 var rect = new Rect(screen.Bounds.X, screen.Bounds.Y, screen.Bounds.Width, screen.Bounds.Height);
 
-                var win = new MainWindow(rect, i, _config);
+                var win = new MonitorOverlay(rect, i, _config);
                 win.SetLanguage(_isJapanese);
                 win.SetDebugVisibility(i == 1 && _showDebug); // 最初は1番目のみデバッグ表示
                 win.Show();

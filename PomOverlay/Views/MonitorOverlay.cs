@@ -1,50 +1,62 @@
 using PomOverlay.Managers;
 using System;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Threading;
-using Color = System.Windows.Media.Color;
 
 namespace PomOverlay
 {
-    public partial class MainWindow : Window
+    /// <summary>
+    /// 1モニター分のオーバーレイ。縁の帯ウィンドウ群とデバッグウィンドウを持ち、
+    /// タイマーでロジッククラスを呼び出して結果を各ウィンドウに反映する
+    /// </summary>
+    public class MonitorOverlay
     {
         private readonly DebugManager _debugManager = new();
+        private readonly Rect _bounds;
+        private readonly List<EdgeBandWindow> _bands = new();
+        private readonly DebugWindow _debugWindow = new();
 
-        [DllImport("user32.dll")] static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        [DllImport("user32.dll")] static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-        const int GWL_EXSTYLE = -20, WS_EX_TRANSPARENT = 0x20, WS_EX_LAYERED = 0x80000;
-
-        public int ScreenIndex { get; set; }
-        public bool IsDebugVisible => DebugContainer.Visibility == Visibility.Visible;
+        public int ScreenIndex { get; }
+        public bool IsDebugVisible => _debugWindow.IsVisible;
 
         private bool _isJapanese = true;
         private DateTime _lastTick = DateTime.Now;
+        private double _bandWidth = -1;
 
-        private AppConfig _config = new();
+        private AppConfig _config;
         private readonly AuroraPhysicsCalculator _physics = new();
         private readonly DispatcherTimer _timer;
         private readonly ConsecutiveFailureLimiter _updateFailures = new(10);
 
         private readonly DebugLabels _labels = new();
 
-        public MainWindow(Rect bounds, int index, AppConfig config)
+        public MonitorOverlay(Rect bounds, int index, AppConfig config)
         {
-            InitializeComponent();
+            ScreenIndex = index;
+            _bounds = bounds;
+            _config = config;
 
-            this.ScreenIndex = index;
-            this._config = config;
-            this.Left = bounds.X; this.Top = bounds.Y; this.Width = bounds.Width; this.Height = bounds.Height;
+            _debugWindow.Left = bounds.X + 20;
+            _debugWindow.Top = bounds.Y + 20;
+
+            LayoutBands();
 
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };//30FPS:33  60なら16に
             _timer.Tick += Update;
+        }
+
+        public void Show()
+        {
+            _bands.ForEach(b => b.Show());
             _timer.Start();
         }
 
         public void UpdateConfig(AppConfig config)
         {
-            this._config = config;
+            _config = config;
             _labels.SetLanguage(_isJapanese);
+            LayoutBands();
 
             // 連続失敗で止まっていた場合、設定の変更（リロード等）を機に再開する
             _updateFailures.Reset();
@@ -55,11 +67,28 @@ namespace PomOverlay
             }
         }
 
-        protected override void OnSourceInitialized(EventArgs e)
+        // 帯幅は設定からだけ決まるので、設定が変わったときだけ配置し直す
+        private void LayoutBands()
         {
-            base.OnSourceInitialized(e);
-            var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-            SetWindowLong(hwnd, GWL_EXSTYLE, GetWindowLong(hwnd, GWL_EXSTYLE) | WS_EX_TRANSPARENT | WS_EX_LAYERED);
+            double bandWidth = EdgeBandLayout.CalculateBandWidth(_config);
+            if (bandWidth == _bandWidth) return;
+            _bandWidth = bandWidth;
+
+            var rects = EdgeBandLayout.Calculate(_bounds.Width, _bounds.Height, bandWidth);
+            bool wasShown = _bands.Count > 0 && _bands[0].IsVisible;
+
+            if (rects.Count != _bands.Count)
+            {
+                _bands.ForEach(b => b.Close());
+                _bands.Clear();
+                foreach (var _ in rects) _bands.Add(new EdgeBandWindow());
+            }
+
+            for (int i = 0; i < rects.Count; i++)
+            {
+                _bands[i].Place(_bounds, rects[i]);
+                if (wasShown) _bands[i].Show();
+            }
         }
 
         private void Update(object? sender, EventArgs e)
@@ -76,13 +105,15 @@ namespace PomOverlay
                 // 2. 物理演算（数値の補完と揺らぎ）
                 var physics = _physics.Update(state, delta);
 
-                // 3. 描画反映（WPF要素への適用）
-                ApplyVisuals(physics, state);
+                // 3. 描画反映（各帯ウィンドウへの適用）
+                var colors = GradientColors.Calculate(state, EdgeBandWindow.GradientStopCount);
+                foreach (var band in _bands) band.Apply(physics, colors);
 
                 // 4. デバッグ表示
                 if (IsDebugVisible)
                 {
-                    UpdateDebugText(now, state, physics, delta);
+                    _debugWindow.SetText(_debugManager.GenerateDebugText(
+                        now, state, physics, _config, ScreenIndex, _labels, delta));
                 }
 
                 _updateFailures.RecordSuccess();
@@ -102,35 +133,6 @@ namespace PomOverlay
             }
         }
 
-        private void ApplyVisuals(AuroraPhysics physics, PomodoroState state)
-        {
-            AuroraRect.StrokeThickness = physics.Thick;
-            BlurEff.Radius = physics.Blur;
-
-            // 不透明度を反映
-            AuroraRect.Opacity = physics.Opacity;
-
-            // ブラシの移動（Flow）
-            BrushTransform.X = physics.Flow;
-            BrushTransform.Y = physics.Flow;
-
-            // グラデーションの色の更新
-            int stopCount = AuroraBrush.GradientStops.Count;
-            for (int i = 0; i < stopCount; i++)
-            {
-                Color cSrc = state.CurrentSet.GetInterpolatedColor(i, stopCount);
-                Color cDst = state.TargetSet.GetInterpolatedColor(i, stopCount);
-
-                AuroraBrush.GradientStops[i].Color = Interpolation.LerpColor(cSrc, cDst, state.TransRatio);
-            }
-        }
-
-        private void UpdateDebugText(DateTime now, PomodoroState s, AuroraPhysics p, double delta)
-        {
-            DebugText.Text = _debugManager.GenerateDebugText(
-                now, s, p, _config, ScreenIndex, _labels, delta);
-        }
-
         public void SetLanguage(bool jp)
         {
             _isJapanese = jp;
@@ -138,6 +140,10 @@ namespace PomOverlay
             _debugManager.SetLanguage(jp);
         }
 
-        public void SetDebugVisibility(bool v) => DebugContainer.Visibility = v ? Visibility.Visible : Visibility.Collapsed;
+        public void SetDebugVisibility(bool v)
+        {
+            if (v) _debugWindow.Show();
+            else _debugWindow.Hide();
+        }
     }
 }

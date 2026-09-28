@@ -7,7 +7,7 @@
 ## 子タスク
 
 - [x] [E02-01: 現状の負荷のベースライン計測](../tasks/E02-01-baseline-measurement.md)
-- [ ] [E02-02: ウィンドウを画面の縁の帯だけにする](../tasks/E02-02-edge-band-windows.md)
+- [x] [E02-02: ウィンドウを画面の縁の帯だけにする](../tasks/E02-02-edge-band-windows.md)
 - [ ] [E02-03: ぼかしの事前ベイク](../tasks/E02-03-prebaked-blur.md)
 
 ## 完了条件

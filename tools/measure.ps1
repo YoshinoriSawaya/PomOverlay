@@ -11,14 +11,20 @@
     Process.TotalProcessorTime を読めないため、WMI のパフォーマンスカウンタ(名前がローカライズされない)を使う。
     GPU は 3D エンジンの使用率を1秒ごとにサンプリングした平均。
 
-    リポジトリ直下で実行する:  pwsh tools/measure.ps1
+    -Mode を指定すると、実行ファイルのフォルダを一時フォルダにコピーし、config.json の OverrideMode を
+    書き換えてから起動する(元の config.json は変更しない)。スケジュールにより時刻でモードが変わるため、
+    別の日の計測と比べるときは -Mode を指定する。
+
+    リポジトリ直下で実行する:  pwsh tools/measure.ps1 -Mode Sleep
     事前に Release ビルドしておくこと:  dotnet build PomOverlay/PomOverlay.csproj -c Release
 #>
 param(
     [string]$ExePath = "PomOverlay/bin/Release/net10.0-windows/PomOverlay.exe",
     [int]$IdleSec = 20,
     [int]$WarmupSec = 10,
-    [int]$DurationSec = 30
+    [int]$DurationSec = 30,
+    [ValidateSet("", "Auto", "Focus", "Rest", "Sleep")]
+    [string]$Mode = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,6 +33,19 @@ $cores = [Environment]::ProcessorCount
 
 if (Get-Process PomOverlay -ErrorAction SilentlyContinue) {
     throw "PomOverlay がすでに起動しています。終了してから実行してください。"
+}
+
+if ($Mode) {
+    # 古いビルドは enum を数値でしか読めないので数値で書く
+    $modeNumber = @{ Auto = 0; Focus = 1; Rest = 2; Sleep = 3 }[$Mode]
+    $tmp = Join-Path ([IO.Path]::GetTempPath()) "pomoverlay-measure"
+    Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    Copy-Item (Split-Path $exe) $tmp -Recurse
+    $configPath = Join-Path $tmp "config.json"
+    if (-not (Test-Path $configPath)) { throw "config.json がありません。一度アプリを起動して生成してください。" }
+    (Get-Content $configPath -Raw) -replace '"OverrideMode":\s*("?\w+"?)', "`"OverrideMode`": $modeNumber" | Set-Content $configPath
+    $exe = Join-Path $tmp (Split-Path $exe -Leaf)
+    Write-Host "モードを $Mode に固定して計測します"
 }
 
 function Get-CpuRaw([int[]]$ids) {
