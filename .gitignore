@@ -1,7 +1,7 @@
 # Visual Studio 共通の除外設定
 .vs/
 [Bb]in/
-[Ob]j/
+[Oo]bj/
 *.user
 *.suo
 *.userosscache
