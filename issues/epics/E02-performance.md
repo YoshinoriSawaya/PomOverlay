@@ -12,7 +12,7 @@
 - [x] [E02-02: ウィンドウを画面の縁の帯だけにする](../tasks/E02-02-edge-band-windows.md)
 - [x] ~~[E02-03: ぼかしの事前ベイク](../tasks/E02-03-prebaked-blur.md)~~ 中止(CPU に効果が無かった)
 - [x] [E02-04: デバッグ表示の更新を間引く](../tasks/E02-04-throttle-debug-text.md)
-- [ ] [E02-05: フレームレートを下げる](../tasks/E02-05-lower-frame-rate.md)
+- [x] [E02-05: フレームレートを下げる](../tasks/E02-05-lower-frame-rate.md)
 - [ ] [E02-06: 帯幅を今のモードに合わせる](../tasks/E02-06-dynamic-band-width.md)
 
 ## 完了条件

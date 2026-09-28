@@ -33,6 +33,8 @@ namespace PomOverlay.Tests
 
             Assert.Equal(AppConfig.Mode.Auto, config.OverrideMode);
             Assert.Equal(AppConfig.Mode.Rest, config.Schedules[0].ApplyMode);
+            // Fps が無い古い config.json は既定値になる
+            Assert.Equal(AppConfig.DefaultFps, config.Fps);
         }
 
         [Fact]

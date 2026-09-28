@@ -167,6 +167,36 @@ namespace PomOverlay.Tests
             Assert.Equal(3, config.Schedules.Count);
         }
 
+        [Theory]
+        [InlineData(0.0)]
+        [InlineData(-30.0)]
+        [InlineData(0.5)]
+        [InlineData(61.0)]
+        [InlineData(double.PositiveInfinity)]
+        public void FpsOutsideOneToSixty_FallsBackToDefault(double bad)
+        {
+            var config = AppConfig.CreateDefault();
+            config.Fps = bad;
+
+            var warnings = ConfigValidator.Sanitize(config);
+
+            Assert.Equal(AppConfig.DefaultFps, config.Fps);
+            Assert.Single(warnings);
+        }
+
+        [Theory]
+        [InlineData(1.0)]
+        [InlineData(15.0)]
+        [InlineData(60.0)]
+        public void FpsWithinRange_IsKept(double fps)
+        {
+            var config = AppConfig.CreateDefault();
+            config.Fps = fps;
+
+            Assert.Empty(ConfigValidator.Sanitize(config));
+            Assert.Equal(fps, config.Fps);
+        }
+
         [Fact]
         public void NegativeTransitionSec_FallsBackToDefault()
         {

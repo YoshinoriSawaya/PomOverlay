@@ -19,7 +19,7 @@ PomOverlay.Tests/       ロジック層のユニットテスト(xUnit)
 ```
 
 - `App.xaml.cs`：起動時・リロード時に `config.json` を読み込み、`ConfigValidator` で不正な値を補正する。接続されている全モニター分の `MonitorOverlay` を生成する。トレイアイコン・メニューの管理もここ
-- `MonitorOverlay`：1モニター分の配線(Window ではない)。16msごとのタイマーで `PomodoroStateCalculator`(状態計算)→ `AuroraPhysicsCalculator`(物理演算)→ `GradientColors`(色)を呼び、結果を縁の帯ウィンドウに反映する。連続して例外が出たらループを止める(`ConsecutiveFailureLimiter`)
+- `MonitorOverlay`：1モニター分の配線(Window ではない)。`CompositionTarget.Rendering`(画面のリフレッシュごと)を `FramePacer` で `Fps`(既定30)に間引き、 `PomodoroStateCalculator`(状態計算)→ `AuroraPhysicsCalculator`(物理演算)→ `GradientColors`(色)を呼び、結果を縁の帯ウィンドウに反映する。連続して例外が出たらループを止める(`ConsecutiveFailureLimiter`)
 - `EdgeBandWindow`：縁の帯1本分(上・下・左・右)のレイヤードウィンドウ。帯幅は `EdgeBandLayout` が全モードの `Thick + BlurMax` の最大値から決め、設定変更時だけ配置し直す。中にはモニター全体サイズの `Rectangle` を座標をずらして置き、帯に当たる部分だけを見せる(グラデーションと角のぼかしをつなげるため)
 - `DebugWindow`：モニター左上のデバッグ表示
 - 状態計算・物理演算・設定のバリデーションはWPFの画面に依存しないクラスに置き、`PomOverlay.Tests` でテストしている。色だけはWPFの `System.Windows.Media.Color` をそのまま使っている

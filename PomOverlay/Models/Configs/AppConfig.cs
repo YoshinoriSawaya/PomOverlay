@@ -11,6 +11,7 @@ namespace PomOverlay
     /// </summary>
     /* * [各設定項目の解説]
      * TransitionSec : モードが切り替わる際のフェード時間（秒）。
+     * Fps           : オーバーレイの更新回数（1秒あたり）。負荷はほぼこれに比例する。
      * Modes         : モード名（Focus, Rest, Sleep等）をキーとした設定の辞書。
      * Schedules     : 特定の時間帯に強制的にモードを固定するスケジュールのリスト。
      */
@@ -24,6 +25,11 @@ namespace PomOverlay
 
         // フェードにかける時間
         public double TransitionSec { get; set; } = 30.0;
+
+        // 更新回数（1秒あたり）。オーロラの動きはゆっくりなので30で足りる
+        public const double DefaultFps = 30.0;
+        public const double MaxFps = 60.0;
+        public double Fps { get; set; } = DefaultFps;
 
         public PhaseConfig GetModeConfig(Mode modeName)
         {

@@ -1,4 +1,4 @@
-using ColorConverter = System.Windows.Media.ColorConverter;
+﻿using ColorConverter = System.Windows.Media.ColorConverter;
 
 namespace PomOverlay
 {
@@ -21,6 +21,12 @@ namespace PomOverlay
             {
                 warnings.Add($"TransitionSec が不正です ({config.TransitionSec})。{DefaultTransitionSec} を使います");
                 config.TransitionSec = DefaultTransitionSec;
+            }
+
+            if (!double.IsFinite(config.Fps) || config.Fps < 1 || config.Fps > AppConfig.MaxFps)
+            {
+                warnings.Add($"Fps は1～{AppConfig.MaxFps}で指定してください ({config.Fps})。{AppConfig.DefaultFps} を使います");
+                config.Fps = AppConfig.DefaultFps;
             }
 
             config.Modes ??= new();

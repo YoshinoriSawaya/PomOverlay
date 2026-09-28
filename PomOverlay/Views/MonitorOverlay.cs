@@ -1,14 +1,15 @@
 ﻿using PomOverlay.Managers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
-using System.Windows.Threading;
+using System.Windows.Media;
 
 namespace PomOverlay
 {
     /// <summary>
     /// 1モニター分のオーバーレイ。縁の帯ウィンドウ群とデバッグウィンドウを持ち、
-    /// タイマーでロジッククラスを呼び出して結果を各ウィンドウに反映する
+    /// 画面の描画タイミングに合わせて（Fps に間引いて）ロジッククラスを呼び出し、結果を各ウィンドウに反映する
     /// </summary>
     public class MonitorOverlay
     {
@@ -26,7 +27,9 @@ namespace PomOverlay
 
         private AppConfig _config;
         private readonly AuroraPhysicsCalculator _physics = new();
-        private readonly DispatcherTimer _timer;
+        private readonly FramePacer _pacer;
+        private readonly Stopwatch _sinceLastRendering = new();
+        private bool _running;
         private readonly ConsecutiveFailureLimiter _updateFailures = new(10);
 
         private readonly DebugLabels _labels = new();
@@ -46,29 +49,50 @@ namespace PomOverlay
 
             LayoutBands();
 
-            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };//30FPS:33  60なら16に
-            _timer.Tick += Update;
+            _pacer = new FramePacer(config.Fps);
         }
 
         public void Show()
         {
             _bands.ForEach(b => b.Show());
-            _timer.Start();
+            Start();
+        }
+
+        // CompositionTarget.Rendering は画面のリフレッシュごとに呼ばれる。DispatcherTimer は約15.6ms 刻みに丸められ、狙ったフレームレートにならないため
+        private void Start()
+        {
+            if (_running) return;
+            _running = true;
+            _lastTick = DateTime.Now;
+            _pacer.Reset();
+            _sinceLastRendering.Restart();
+            CompositionTarget.Rendering += OnRendering;
+        }
+
+        private void Stop()
+        {
+            if (!_running) return;
+            _running = false;
+            CompositionTarget.Rendering -= OnRendering;
+        }
+
+        private void OnRendering(object? sender, EventArgs e)
+        {
+            double elapsed = _sinceLastRendering.Elapsed.TotalSeconds;
+            _sinceLastRendering.Restart();
+            if (_pacer.Tick(elapsed)) Update();
         }
 
         public void UpdateConfig(AppConfig config)
         {
             _config = config;
             _labels.SetLanguage(_isJapanese);
+            _pacer.SetFps(config.Fps);
             LayoutBands();
 
             // 連続失敗で止まっていた場合、設定の変更（リロード等）を機に再開する
             _updateFailures.Reset();
-            if (!_timer.IsEnabled)
-            {
-                _lastTick = DateTime.Now;
-                _timer.Start();
-            }
+            Start();
         }
 
         // 帯幅は設定からだけ決まるので、設定が変わったときだけ配置し直す
@@ -95,7 +119,7 @@ namespace PomOverlay
             }
         }
 
-        private void Update(object? sender, EventArgs e)
+        private void Update()
         {
             try
             {
@@ -129,10 +153,10 @@ namespace PomOverlay
             }
             catch (Exception ex)
             {
-                // 16msごとに同じ例外でログを吐き続けないよう、連続失敗が上限に達したらループを止める
+                // 毎フレーム同じ例外でログを吐き続けないよう、連続失敗が上限に達したらループを止める
                 if (_updateFailures.RecordFailure())
                 {
-                    _timer.Stop();
+                    Stop();
                     _debugManager.LogError($"Update Loop Error ({_updateFailures.Limit}回連続で失敗したため停止。設定のリロードで再開)", ex);
                 }
                 else
