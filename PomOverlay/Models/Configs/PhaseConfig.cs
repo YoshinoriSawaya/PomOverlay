@@ -34,7 +34,7 @@ namespace PomOverlay
             Color c1 = (Color)ColorConverter.ConvertFromString(ColorStrings[i1]);
             Color c2 = (Color)ColorConverter.ConvertFromString(ColorStrings[i2]);
 
-            return MainWindow.LerpColorStatic(c1, c2, localRatio);
+            return Interpolation.LerpColor(c1, c2, localRatio);
         }
     }
 
