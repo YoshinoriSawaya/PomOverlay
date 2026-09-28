@@ -11,19 +11,25 @@ namespace PomOverlay
         // ぼかしの裾や丸め誤差のための余白
         public const double Padding = 2;
 
+        // フェードが始まる少し前から帯を広げておくための猶予(秒)
+        public const double TransitionLeadSec = 2;
+
         /// <summary>
-        /// 線の太さ＋ぼかし半径の最大値から帯幅を決める。
-        /// フェード中は Thick と Blur が同じ比率で補間されるため、合計がモードごとの最大値を超えることはない
+        /// 今のモードの「線の太さ＋ぼかし半径の最大」から帯幅を決める。
+        /// フェードが近い（残り TransitionSec＋猶予 以内）ときだけフェード先のモードも含める。
+        /// フェード中は Thick と Blur が同じ比率で補間されるため、合計が2つのモードの大きい方を超えることはない
         /// </summary>
-        public static double CalculateBandWidth(AppConfig config)
+        public static double CalculateBandWidth(PomodoroState state, double transitionSec)
         {
-            double max = 0;
-            foreach (var mode in config.Modes.Values)
+            double width = Extent(state.CurrentSet);
+            if (state.TransRatio > 0 || state.RemainingSec <= transitionSec + TransitionLeadSec)
             {
-                max = Math.Max(max, mode.Thick + Math.Max(mode.BlurMin, mode.BlurMax));
+                width = Math.Max(width, Extent(state.TargetSet));
             }
-            return Math.Ceiling(max) + Padding;
+            return Math.Ceiling(width) + Padding;
         }
+
+        private static double Extent(PhaseConfig mode) => mode.Thick + Math.Max(mode.BlurMin, mode.BlurMax);
 
         /// <summary>
         /// 上・下・左・右の帯を返す（左右は上下の帯と重ならない高さ）。

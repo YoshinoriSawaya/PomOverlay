@@ -2,30 +2,55 @@ namespace PomOverlay.Tests
 {
     public class EdgeBandLayoutTests
     {
-        [Fact]
-        public void BandWidth_UsesMaxOfThickPlusBlurAcrossModes()
-        {
-            var config = new AppConfig();
-            config.Modes["Focus"] = new PhaseConfig { Thick = 2, BlurMax = 10 };
-            config.Modes["Rest"] = new PhaseConfig { Thick = 20, BlurMax = 150 };
-            config.Modes["Sleep"] = new PhaseConfig { Thick = 1, BlurMax = 100.4 };
+        private static readonly PhaseConfig Focus = new() { Thick = 2, BlurMin = 4, BlurMax = 10 };
+        private static readonly PhaseConfig Rest = new() { Thick = 50, BlurMin = 30, BlurMax = 50 };
 
-            Assert.Equal(170 + EdgeBandLayout.Padding, EdgeBandLayout.CalculateBandWidth(config));
+        private static PomodoroState State(PhaseConfig current, PhaseConfig target, double remainingSec, double transRatio = 0)
+            => new() { CurrentSet = current, TargetSet = target, RemainingSec = remainingSec, TransRatio = transRatio };
+
+        [Fact]
+        public void BandWidth_FarFromTransition_UsesCurrentModeOnly()
+        {
+            var width = EdgeBandLayout.CalculateBandWidth(State(Focus, Rest, remainingSec: 600), transitionSec: 30);
+
+            Assert.Equal(12 + EdgeBandLayout.Padding, width);
+        }
+
+        [Theory]
+        [InlineData(32.0, 0.0)]  // フェード開始の猶予(2秒)に入った
+        [InlineData(15.0, 0.5)]  // フェード中
+        public void BandWidth_NearOrDuringTransition_CoversTargetMode(double remainingSec, double transRatio)
+        {
+            var width = EdgeBandLayout.CalculateBandWidth(State(Focus, Rest, remainingSec, transRatio), transitionSec: 30);
+
+            Assert.Equal(100 + EdgeBandLayout.Padding, width);
         }
 
         [Fact]
-        public void BandWidth_RoundsUp()
+        public void BandWidth_JustBeforeLead_StillCurrentOnly()
         {
-            var config = new AppConfig();
-            config.Modes["Focus"] = new PhaseConfig { Thick = 2.2, BlurMax = 10 };
+            var width = EdgeBandLayout.CalculateBandWidth(State(Focus, Rest, remainingSec: 32.5), transitionSec: 30);
 
-            Assert.Equal(13 + EdgeBandLayout.Padding, EdgeBandLayout.CalculateBandWidth(config));
+            Assert.Equal(12 + EdgeBandLayout.Padding, width);
         }
 
         [Fact]
-        public void BandWidth_NoModes_IsPaddingOnly()
+        public void BandWidth_ForcedMode_UsesThatMode()
         {
-            Assert.Equal(EdgeBandLayout.Padding, EdgeBandLayout.CalculateBandWidth(new AppConfig()));
+            // 強制・スケジュール時は Current と Target が同じで RemainingSec = 0
+            var width = EdgeBandLayout.CalculateBandWidth(State(Rest, Rest, remainingSec: 0), transitionSec: 30);
+
+            Assert.Equal(100 + EdgeBandLayout.Padding, width);
+        }
+
+        [Fact]
+        public void BandWidth_UsesLargerOfBlurMinAndMax_AndRoundsUp()
+        {
+            var odd = new PhaseConfig { Thick = 2.2, BlurMin = 10, BlurMax = 3 };
+
+            var width = EdgeBandLayout.CalculateBandWidth(State(odd, odd, remainingSec: 600), transitionSec: 30);
+
+            Assert.Equal(13 + EdgeBandLayout.Padding, width);
         }
 
         [Fact]

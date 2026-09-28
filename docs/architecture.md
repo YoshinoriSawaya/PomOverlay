@@ -20,7 +20,7 @@ PomOverlay.Tests/       ロジック層のユニットテスト(xUnit)
 
 - `App.xaml.cs`：起動時・リロード時に `config.json` を読み込み、`ConfigValidator` で不正な値を補正する。接続されている全モニター分の `MonitorOverlay` を生成する。トレイアイコン・メニューの管理もここ
 - `MonitorOverlay`：1モニター分の配線(Window ではない)。`CompositionTarget.Rendering`(画面のリフレッシュごと)を `FramePacer` で `Fps`(既定30)に間引き、 `PomodoroStateCalculator`(状態計算)→ `AuroraPhysicsCalculator`(物理演算)→ `GradientColors`(色)を呼び、結果を縁の帯ウィンドウに反映する。連続して例外が出たらループを止める(`ConsecutiveFailureLimiter`)
-- `EdgeBandWindow`：縁の帯1本分(上・下・左・右)のレイヤードウィンドウ。帯幅は `EdgeBandLayout` が全モードの `Thick + BlurMax` の最大値から決め、設定変更時だけ配置し直す。中にはモニター全体サイズの `Rectangle` を座標をずらして置き、帯に当たる部分だけを見せる(グラデーションと角のぼかしをつなげるため)
+- `EdgeBandWindow`：縁の帯1本分(上・下・左・右)のレイヤードウィンドウ。帯幅は `EdgeBandLayout` が今のモード(フェードが近いときはフェード先も)の `Thick + BlurMax` から決め、値が変わったときだけ配置し直す。中にはモニター全体サイズの `Rectangle` を座標をずらして置き、帯に当たる部分だけを見せる(グラデーションと角のぼかしをつなげるため)
 - `DebugWindow`：モニター左上のデバッグ表示
 - 状態計算・物理演算・設定のバリデーションはWPFの画面に依存しないクラスに置き、`PomOverlay.Tests` でテストしている。色だけはWPFの `System.Windows.Media.Color` をそのまま使っている
 - 透過表示は `AllowsTransparency="True"` + P/Invoke(`ClickThrough`)での `WS_EX_LAYERED`/`WS_EX_TRANSPARENT` 指定によるレイヤードウィンドウ
@@ -31,7 +31,7 @@ PomOverlay.Tests/       ロジック層のユニットテスト(xUnit)
 
 ## 今後の方向性(検討中・未着手)
 
-- **描くピクセル数とフレーム数を減らす**:デバッグ表示の間引き、フレームレートの引き下げ、帯幅を今のモードに合わせる(E02-04〜06)
+- **帯の面積によらない固定費の調査**:Focus(帯幅14px)でも CPU が約20%残る。ウィンドウ枚数・デバッグ表示・`BlurEffect` のどれが効いているか未調査(E02-06)
 - ぼかしの事前ベイクは試したが CPU に効果が無かった(E02-03、中止)
 - **設定ウィンドウ**：現在は`config.json`の直接編集のみ。GUIでの編集画面を追加する
 

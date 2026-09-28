@@ -47,7 +47,7 @@ namespace PomOverlay
             _debugWindow.Left = bounds.X + 20;
             _debugWindow.Top = bounds.Y + 20;
 
-            LayoutBands();
+            LayoutBands(EdgeBandLayout.CalculateBandWidth(PomodoroStateCalculator.Calculate(config, DateTime.Now), config.TransitionSec));
 
             _pacer = new FramePacer(config.Fps);
         }
@@ -88,17 +88,15 @@ namespace PomOverlay
             _config = config;
             _labels.SetLanguage(_isJapanese);
             _pacer.SetFps(config.Fps);
-            LayoutBands();
 
             // 連続失敗で止まっていた場合、設定の変更（リロード等）を機に再開する
             _updateFailures.Reset();
             Start();
         }
 
-        // 帯幅は設定からだけ決まるので、設定が変わったときだけ配置し直す
-        private void LayoutBands()
+        // 帯幅はモードの切り替わりでしか変わらないので、変わったときだけウィンドウを配置し直す
+        private void LayoutBands(double bandWidth)
         {
-            double bandWidth = EdgeBandLayout.CalculateBandWidth(_config);
             if (bandWidth == _bandWidth) return;
             _bandWidth = bandWidth;
 
@@ -129,6 +127,7 @@ namespace PomOverlay
 
                 // 1. ロジック計算（時間の計算）
                 var state = PomodoroStateCalculator.Calculate(_config, now);
+                LayoutBands(EdgeBandLayout.CalculateBandWidth(state, _config.TransitionSec));
 
                 // 2. 物理演算（数値の補完と揺らぎ）
                 var physics = _physics.Update(state, delta);
