@@ -20,16 +20,19 @@ E01-01の完了後に着手する。
 
 ## 設計の決定
 
-(未着手)
+- `dotnet new xunit` で作成(xUnit 2.9.3)。本体の `PhaseConfig` が `System.Windows.Media.Color` に依存しているため、テストプロジェクトも `net10.0-windows` / `UseWPF=true` にした
+- 本体(WinExe)をプロジェクト参照して、`PomodoroStateCalculator`・`AuroraPhysicsCalculator` を直接テストする
+- 位相 `_currentPhase` は private なので、外から見える `PulseTime`(= 位相/2π × PulseSec)を通して 2π でのラップを確かめる
+- 完了条件に挙げた観点に加えて、次も現状の挙動としてテストで固定した:フェード率(`TransRatio`)、進捗率、日付をまたぐスケジュール、`Modes` に無いモードをスケジュールで指定したときサイクルに戻ること、`TransRatio` の範囲外の値がクランプされること
 
 ## 検証結果
 
-(未着手)
+- 2026-09-29: `dotnet test PomOverlay.slnx` で 25件すべて成功
 
 ## 未検証のまま残したこと
 
-(未着手)
+- 0以下の `PulseSec`/`FlowDuration`/`Min` といった不正な設定値のケースはテストしていない(E01-04 でバリデーションを入れるときに追加する)
 
 ## ステータス
 
-未着手
+完了(2026-09-29)

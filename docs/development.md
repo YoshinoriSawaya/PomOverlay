@@ -31,5 +31,6 @@
 
 ## テスト
 
-- ロジック層(状態計算・物理演算)を切り出したあと、`PomOverlay.Tests` プロジェクト(xUnit想定)を追加する
-- `dotnet test` で実行する想定(プロジェクト追加後にこの節を更新する)
+- `PomOverlay.Tests`(xUnit)に、WPF非依存のロジック層(`PomodoroStateCalculator`・`AuroraPhysicsCalculator`)のユニットテストがある
+- リポジトリ直下で `dotnet test PomOverlay.slnx` を実行する(Visual Studio ではテストエクスプローラーからも実行できる)
+- 本体が WPF の `Color` 型を使うため、テストプロジェクトも `net10.0-windows` / `UseWPF` にしている
