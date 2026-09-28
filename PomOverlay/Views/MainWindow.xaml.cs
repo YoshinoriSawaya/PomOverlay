@@ -27,6 +27,8 @@ namespace PomOverlay
 
         private AppConfig _config = new();
         private readonly AuroraPhysicsCalculator _physics = new();
+        private readonly DispatcherTimer _timer;
+        private readonly ConsecutiveFailureLimiter _updateFailures = new(10);
 
         private readonly DebugLabels _labels = new();
 
@@ -38,6 +40,14 @@ namespace PomOverlay
         {
             this._config = config;
             _labels.SetLanguage(_isJapanese);
+
+            // 連続失敗で止まっていた場合、設定の変更（リロード等）を機に再開する
+            _updateFailures.Reset();
+            if (!_timer.IsEnabled)
+            {
+                _lastTick = DateTime.Now;
+                _timer.Start();
+            }
         }
 
 
@@ -53,9 +63,9 @@ namespace PomOverlay
             this.ScreenIndex = index;
             this.Left = bounds.X; this.Top = bounds.Y; this.Width = bounds.Width; this.Height = bounds.Height;
 
-            DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };//30FPS:33  60なら16に
-            timer.Tick += Update;
-            timer.Start();
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };//30FPS:33  60なら16に
+            _timer.Tick += Update;
+            _timer.Start();
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -89,14 +99,21 @@ namespace PomOverlay
                 {
                     UpdateDebugText(now, state, physics, delta);
                 }
+
+                _updateFailures.RecordSuccess();
             }
             catch (Exception ex)
             {
+                // 16msごとに同じ例外でログを吐き続けないよう、連続失敗が上限に達したらループを止める
+                if (_updateFailures.RecordFailure())
                 {
-                    // 1回だけログを吐いて、タイマーを止めるなどの処置
+                    _timer.Stop();
+                    _debugManager.LogError($"Update Loop Error ({_updateFailures.Limit}回連続で失敗したため停止。設定のリロードで再開)", ex);
+                }
+                else
+                {
                     _debugManager.LogError("Update Loop Error", ex);
                 }
-
             }
         }
 
