@@ -80,6 +80,8 @@ namespace PomOverlay.Tests
             Assert.Contains(errors, e => e.Contains("NotAColor"));
             Assert.Contains(errors, e => e.Contains("25:00"));
             Assert.Contains(errors, e => e.Contains("Fps"));
+            // 読み込み時の補正の文言（「〜を使います」）は出さない
+            Assert.DoesNotContain(errors, e => e.Contains("使います"));
             // 入力中の値は補正で書き換えない（ユーザーが直す）
             Assert.Equal(0, focus.PulseSec);
             Assert.Equal(500, vm.Fps);

@@ -163,7 +163,8 @@ namespace PomOverlay.Tests
             var warnings = ConfigValidator.Sanitize(config);
 
             Assert.Single(warnings);
-            Assert.Contains("25:99", warnings[0]);
+            Assert.Contains("25:99", warnings[0].Problem);
+            Assert.EndsWith("このスケジュールは無視されます", warnings[0].ToString());
             Assert.Equal(3, config.Schedules.Count);
         }
 

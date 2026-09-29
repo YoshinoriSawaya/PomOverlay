@@ -7,7 +7,7 @@
 ## 子タスク
 
 - [x] [E03-01: 設定画面の ViewModel](../tasks/E03-01-settings-viewmodel.md)
-- [ ] [E03-02: 設定ウィンドウとトレイメニュー](../tasks/E03-02-settings-window.md)
+- [x] [E03-02: 設定ウィンドウとトレイメニュー](../tasks/E03-02-settings-window.md)
 
 ## 完了条件
 

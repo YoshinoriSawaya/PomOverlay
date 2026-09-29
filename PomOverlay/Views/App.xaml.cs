@@ -17,6 +17,7 @@ namespace PomOverlay
         private NotifyIcon _notifyIcon = null!;
         private bool _isJapanese = true;
         private bool _showDebug = true;
+        private SettingsWindow? _settingsWindow;
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         static extern uint RegisterWindowMessage(string lpString);
@@ -173,6 +174,8 @@ namespace PomOverlay
             menu.Items.Add(new ToolStripSeparator());
 
             // --- 設定操作系 ---
+            menu.Items.Add("設定...", null, (s, e) => OpenSettings());
+
             menu.Items.Add("設定ファイル (JSON) を開く", null, (s, e) =>
             {
                 if (File.Exists("config.json"))
@@ -230,6 +233,28 @@ namespace PomOverlay
             menu.Items.Add("終了", null, (s, e) => Shutdown());
 
             _notifyIcon.ContextMenuStrip = menu;
+        }
+
+        private void OpenSettings()
+        {
+            if (_settingsWindow != null)
+            {
+                _settingsWindow.Activate();
+                return;
+            }
+            _settingsWindow = new SettingsWindow(new SettingsViewModel(_config), ApplySettings);
+            _settingsWindow.Closed += (s, e) => _settingsWindow = null;
+            _settingsWindow.Show();
+        }
+
+        // 設定ウィンドウの「適用」。入力チェックは済んでいる
+        private void ApplySettings(AppConfig config)
+        {
+            // モード固定はウィンドウを開いている間にトレイから変わりうるので、今の値を引き継ぐ
+            config.OverrideMode = _config.OverrideMode;
+            _config = config;
+            SaveConfig();
+            ApplyConfigToWindows();
         }
 
         private void ReloadConfig()

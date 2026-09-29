@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -73,7 +73,8 @@ namespace PomOverlay
             config = BuildConfig();
             // Sanitize は渡した設定を書き換えるので、複製で確かめる
             var probe = AppConfig.FromJson(config.ToJson()) ?? new AppConfig();
-            errors = ConfigValidator.Sanitize(probe);
+            // 補正の内容（「30 を使います」など）は読み込み時の話なので、ここでは問題だけを見せる
+            errors = ConfigValidator.Sanitize(probe).Select(i => i.Problem).ToList();
             return errors.Count == 0;
         }
     }

@@ -7,7 +7,8 @@ PomOverlayの横断的な設計判断をまとめる。個別のタスクの経�
 ```
 PomOverlay/
 ├── Views/            App.xaml(.cs)、MonitorOverlay、EdgeBandWindow.xaml(.cs)、
-│                     DebugWindow.xaml(.cs)、ClickThrough
+│                     DebugWindow.xaml(.cs)、SettingsWindow.xaml(.cs)、ClickThrough
+├── ViewModels/       SettingsViewModel(設定ウィンドウの編集内容)
 ├── Models/
 │   ├── Configs/       AppConfig, PhaseConfig, ScheduleItem, ConfigValidator
 │   ├── Domain/         PomodoroState, AuroraPhysics,
@@ -22,6 +23,7 @@ PomOverlay.Tests/       ロジック層のユニットテスト(xUnit)
 - `MonitorOverlay`：1モニター分の配線(Window ではない)。`CompositionTarget.Rendering`(画面のリフレッシュごと)を `FramePacer` で `Fps`(既定30)に間引き、 `PomodoroStateCalculator`(状態計算)→ `AuroraPhysicsCalculator`(物理演算)→ `GradientColors`(色)を呼び、結果を縁の帯ウィンドウに反映する。連続して例外が出たらループを止める(`ConsecutiveFailureLimiter`)
 - `EdgeBandWindow`：縁の帯1本分(上・下・左・右)のレイヤードウィンドウ。帯幅は `EdgeBandLayout` が今のモード(フェードが近いときはフェード先も)の `Thick + BlurMax` から決め、値が変わったときだけ配置し直す。中にはモニター全体サイズの `Rectangle` を座標をずらして置き、帯に当たる部分だけを見せる(グラデーションと角のぼかしをつなげるため)
 - `DebugWindow`：モニター左上のデバッグ表示
+- `SettingsWindow` / `SettingsViewModel`:トレイの「設定...」で開く設定画面。編集内容と入力チェック(`ConfigValidator` の再利用)は WPF 非依存の `SettingsViewModel` が持ち、ウィンドウは配線だけ。「適用」で `App` が保存し、全モニターに反映する
 - 状態計算・物理演算・設定のバリデーションはWPFの画面に依存しないクラスに置き、`PomOverlay.Tests` でテストしている。色だけはWPFの `System.Windows.Media.Color` をそのまま使っている
 - 透過表示は `AllowsTransparency="True"` + P/Invoke(`ClickThrough`)での `WS_EX_LAYERED`/`WS_EX_TRANSPARENT` 指定によるレイヤードウィンドウ
 
@@ -31,7 +33,5 @@ PomOverlay.Tests/       ロジック層のユニットテスト(xUnit)
 
 ## 今後の方向性(検討中・未着手)
 
+- 現時点で予定しているものはない。新しく始めるときは issues に起こす
 - ぼかしの事前ベイクは試したが CPU に効果が無かった(E02-03、中止)
-- **設定ウィンドウ**：現在は`config.json`の直接編集のみ。GUIでの編集画面を追加する
-
-上記はまだ設計段階で、実装のタイミングでissuesに起こす。
