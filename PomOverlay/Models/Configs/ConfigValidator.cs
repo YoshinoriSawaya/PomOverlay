@@ -2,6 +2,12 @@
 
 namespace PomOverlay
 {
+    // 見つかった不正な値。Problem は何が悪いか、Fix は読み込み時にどう補正したか
+    public sealed record ConfigIssue(string Problem, string Fix)
+    {
+        public override string ToString() => $"{Problem}。{Fix}";
+    }
+
     /// <summary>
     /// 手編集された config.json の壊れた値を、物理演算に流れ込む前に安全な値へ置き換える
     /// </summary>
@@ -12,20 +18,20 @@ namespace PomOverlay
         /// <summary>
         /// config をその場で修正し、修正した内容（ユーザーに見せる文言）を返す
         /// </summary>
-        public static List<string> Sanitize(AppConfig config)
+        public static List<ConfigIssue> Sanitize(AppConfig config)
         {
-            var warnings = new List<string>();
+            var warnings = new List<ConfigIssue>();
             var defaults = AppConfig.CreateDefault();
 
             if (!double.IsFinite(config.TransitionSec) || config.TransitionSec < 0)
             {
-                warnings.Add($"TransitionSec が不正です ({config.TransitionSec})。{DefaultTransitionSec} を使います");
+                warnings.Add(new($"TransitionSec が不正です ({config.TransitionSec})", $"{DefaultTransitionSec} を使います"));
                 config.TransitionSec = DefaultTransitionSec;
             }
 
             if (!double.IsFinite(config.Fps) || config.Fps < 1 || config.Fps > AppConfig.MaxFps)
             {
-                warnings.Add($"Fps は1～{AppConfig.MaxFps}で指定してください ({config.Fps})。{AppConfig.DefaultFps} を使います");
+                warnings.Add(new($"Fps は1～{AppConfig.MaxFps}で指定してください ({config.Fps})", $"{AppConfig.DefaultFps} を使います"));
                 config.Fps = AppConfig.DefaultFps;
             }
 
@@ -37,7 +43,7 @@ namespace PomOverlay
                 var fallback = defaults.Modes.GetValueOrDefault(key) ?? defaults.Modes["Focus"];
                 if (config.Modes[key] is null)
                 {
-                    warnings.Add($"Modes.{key} が空です。初期値を使います");
+                    warnings.Add(new($"Modes.{key} が空です", $"初期値を使います"));
                     config.Modes[key] = fallback;
                     continue;
                 }
@@ -48,7 +54,7 @@ namespace PomOverlay
             if (config.Modes.TryGetValue("Focus", out var focus) && config.Modes.TryGetValue("Rest", out var rest)
                 && focus.Min + rest.Min <= 0)
             {
-                warnings.Add("Focus と Rest の Min がどちらも0です。初期値を使います");
+                warnings.Add(new("Focus と Rest の Min がどちらも0です", "初期値を使います"));
                 focus.Min = defaults.Modes["Focus"].Min;
                 rest.Min = defaults.Modes["Rest"].Min;
             }
@@ -58,12 +64,12 @@ namespace PomOverlay
                 var s = config.Schedules[i];
                 if (s is null)
                 {
-                    warnings.Add($"Schedules[{i}] が空です。無視します");
+                    warnings.Add(new($"Schedules[{i}] が空です", $"無視します"));
                     continue;
                 }
                 if (!TimeSpan.TryParse(s.Start, out _) || !TimeSpan.TryParse(s.End, out _))
                 {
-                    warnings.Add($"Schedules[{i}] の時刻が読めません ({s.Start}-{s.End})。このスケジュールは無視されます");
+                    warnings.Add(new($"Schedules[{i}] の時刻が読めません ({s.Start}-{s.End})", $"このスケジュールは無視されます"));
                 }
             }
             config.Schedules.RemoveAll(s => s is null);
@@ -71,7 +77,7 @@ namespace PomOverlay
             return warnings;
         }
 
-        private static void SanitizePhase(string key, PhaseConfig p, PhaseConfig d, List<string> warnings)
+        private static void SanitizePhase(string key, PhaseConfig p, PhaseConfig d, List<ConfigIssue> warnings)
         {
             // 0以下だとゼロ除算になる項目
             p.PulseSec = RequirePositive(key, nameof(p.PulseSec), p.PulseSec, d.PulseSec, warnings);
@@ -80,7 +86,7 @@ namespace PomOverlay
             // 負数が意味を持たない項目（0は許容）
             if (p.Min < 0)
             {
-                warnings.Add($"{key}.Min が負数です ({p.Min})。{d.Min} を使います");
+                warnings.Add(new($"{key}.Min が負数です ({p.Min})", $"{d.Min} を使います"));
                 p.Min = d.Min;
             }
             p.Thick = RequireNonNegative(key, nameof(p.Thick), p.Thick, d.Thick, warnings);
@@ -88,7 +94,7 @@ namespace PomOverlay
             p.BlurMax = RequireNonNegative(key, nameof(p.BlurMax), p.BlurMax, d.BlurMax, warnings);
             if (p.BlurMin > p.BlurMax)
             {
-                warnings.Add($"{key} の BlurMin ({p.BlurMin}) が BlurMax ({p.BlurMax}) より大きいので入れ替えます");
+                warnings.Add(new($"{key} の BlurMin ({p.BlurMin}) が BlurMax ({p.BlurMax}) より大きい", "入れ替えます"));
                 (p.BlurMin, p.BlurMax) = (p.BlurMax, p.BlurMin);
             }
 
@@ -97,7 +103,7 @@ namespace PomOverlay
             p.OpMax = RequireUnit(key, nameof(p.OpMax), p.OpMax, d.OpMax, warnings);
             if (p.OpMin > p.OpMax)
             {
-                warnings.Add($"{key} の OpMin ({p.OpMin}) が OpMax ({p.OpMax}) より大きいので入れ替えます");
+                warnings.Add(new($"{key} の OpMin ({p.OpMin}) が OpMax ({p.OpMax}) より大きい", "入れ替えます"));
                 (p.OpMin, p.OpMax) = (p.OpMax, p.OpMin);
             }
 
@@ -106,34 +112,34 @@ namespace PomOverlay
             var valid = colors.Where(IsValidColor).ToArray();
             foreach (var bad in colors.Except(valid))
             {
-                warnings.Add($"{key}.ColorStrings の \"{bad}\" は色として読めません。取り除きます");
+                warnings.Add(new($"{key}.ColorStrings の \"{bad}\" は色として読めません", $"取り除きます"));
             }
             if (valid.Length == 0)
             {
-                if (colors.Length > 0) warnings.Add($"{key}.ColorStrings に使える色がありません。初期値を使います");
+                if (colors.Length > 0) warnings.Add(new($"{key}.ColorStrings に使える色がありません", $"初期値を使います"));
                 valid = d.ColorStrings;
             }
             p.ColorStrings = valid;
         }
 
-        private static double RequirePositive(string key, string name, double value, double fallback, List<string> warnings)
+        private static double RequirePositive(string key, string name, double value, double fallback, List<ConfigIssue> warnings)
         {
             if (double.IsFinite(value) && value > 0) return value;
-            warnings.Add($"{key}.{name} は0より大きい必要があります ({value})。{fallback} を使います");
+            warnings.Add(new($"{key}.{name} は0より大きい必要があります ({value})", $"{fallback} を使います"));
             return fallback;
         }
 
-        private static double RequireNonNegative(string key, string name, double value, double fallback, List<string> warnings)
+        private static double RequireNonNegative(string key, string name, double value, double fallback, List<ConfigIssue> warnings)
         {
             if (double.IsFinite(value) && value >= 0) return value;
-            warnings.Add($"{key}.{name} が負数です ({value})。{fallback} を使います");
+            warnings.Add(new($"{key}.{name} が負数です ({value})", $"{fallback} を使います"));
             return fallback;
         }
 
-        private static double RequireUnit(string key, string name, double value, double fallback, List<string> warnings)
+        private static double RequireUnit(string key, string name, double value, double fallback, List<ConfigIssue> warnings)
         {
             if (double.IsFinite(value) && value >= 0 && value <= 1) return value;
-            warnings.Add($"{key}.{name} は0～1の範囲で指定してください ({value})。{fallback} を使います");
+            warnings.Add(new($"{key}.{name} は0～1の範囲で指定してください ({value})", $"{fallback} を使います"));
             return fallback;
         }
 
