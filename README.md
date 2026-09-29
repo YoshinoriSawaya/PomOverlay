@@ -62,7 +62,3 @@ git clone https://github.com/YoshinoriSawaya/PomOverlay.git
 
 - パフォーマンス改善(全画面レイヤードウィンドウをフチの帯だけに絞る、ぼかし処理の事前ベイク化)
 - 設定ウィンドウ(GUIでの設定編集)
-
-## 📄 ライセンス (License)
-
-This project is licensed under the [MIT License](LICENSE).
