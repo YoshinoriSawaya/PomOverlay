@@ -60,9 +60,4 @@ git clone https://github.com/YoshinoriSawaya/PomOverlay.git
 
 現在進行中・検討中の内容は [`issues/README.md`](issues/README.md) を参照してください。おおまかには以下を予定しています。
 
-- パフォーマンス改善(全画面レイヤードウィンドウをフチの帯だけに絞る、ぼかし処理の事前ベイク化)
 - 設定ウィンドウ(GUIでの設定編集)
-
-## 📄 ライセンス (License)
-
-This project is licensed under the [MIT License](LICENSE).
